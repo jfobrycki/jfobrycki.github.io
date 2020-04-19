@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset=utf-8 />
+  <title>Finding Longitude in Greenwich</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <link rel='icon' href='https://newmapsplus.github.io/favicon.ico' type='image/x-icon' />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css" rel="stylesheet" />
+  <link href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css?family=Lato:300,300i,400,900i" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Abril+Fatface|Poppins:300" rel="stylesheet">
+  <style>
+   body {
+  width: 80%;
+  margin: 10px auto;
+  padding: 0;
+  background: #f5f5f5;
+  font-family: 'Poppins', Sans-serif;
+  font-weight: 300;
+  color: "black";
+  font-size: 18px;
+  }  
+  /* separate elements with the same properties by commas */
+header, section, footer {
+  margin: 10px auto;
+}
+
+h1 {
+    font-size: 2.5em;
+    font-weight: 900;
+    letter-spacing: .04em;
+    font-family: 'Abril Fatface', cursive;
+    font-size: 48px;
+  }
+
+h2 {
+    font-size: 2em;
+    font-weight: 300;
+    letter-spacing: .04em;
+    font-family: 'Abril Fatface', cursive;
+    font-size: 36px;
+  }
+  p {
+  font-size: 1.1em;
+  line-height: 1.5em;
+  font-family: 'Poppins', Sans-serif;
+  font-weight: 300;
+  color: "black";
+  font-size: 18px;
+}
+
+a {
+  color: #134d00;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+  text-emphasis-color: #4d94ff;
+}
+
+ul {
+  padding-left: 20px;
+  font-family: 'Poppins', Sans-serif;
+  font-weight: 300;
+  color: "black";
+  font-size: 18px;
+}
+
+li {
+  margin: 10px 0;
+}
+
+hr {
+  margin: 20px 0;
+  border: 0;
+  height: 1px;
+  background: #d3d3d3;
+}
+
+.caption {
+  margin: 0 0 20px 0;
+  display: block;
+}
+#map {
+  width: 100%;
+  height: 540px;
+  margin: 10px auto;
+  border: 2px solid #d3d3d3;
+}
+.highlight {
+  color: #f05716; 
+  font-weight: bold;
+}
+.img-fill {
+    width: 100%;
+    height: auto;
+    margin: 10px 0;
+}
+/* Use float property to make two-column layout */
+.first-column {
+  float: left;
+  width: 49%;
+  padding-right: 2%;  
+  }
+
+.second-column {
+  float: left;
+  width: 49%;
+  }
+
+/* Clear floats after columns */
+.row::after {
+  content: "";
+  display: block;
+  clear: both;
+  }
+
+  @media screen and (max-width: 900px) {
+  .first-column,
+  .second-column {
+    width: 100%;
+    }
+  }
+  </style>
+  <script src="http://code.jquery.com/jquery-3.4.1.min.js"></script>
+  <script src="http://code.jquery.com/jquery-3.4.1.min.js"></script>  
+<script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"></script>
+</head>
+
+<body>
+  <header>
+  <h1>Finding Longitude in Greenwich</h1>
+</header>
+<div id="map"></div>
+<!-- Start row -->
+<div class="row">
+
+  <!-- Start left column -->
+  <div class="first-column">
+    <h2>Longitude and Mapping History</h2>
+    <p>During the 1700's, John Harrison developed more accurate timekeepers that allowed for effectively determining longitude. Harrison's clocks are on display at the <a href="https://www.rmg.co.uk/royal-observatory">Royal Observatory</a> in London. These clocks were able to keep accurate time while at sea and this allowed people to determine their longitude during voyages.</p>
+    <ul>
+      <li>See my projects on GitHub: <a href="https://github.com/newmapsplus">New Maps Plus</a></li>
+      <li>Follow me on twitter: <a href="https://twitter.com/NewMapsPlus">@NewMapsPlus</a></li>
+      <li>Visit my <a href='#'>mapping portfolio</a>.</li>
+    </ul>
+
+  <!-- End first column -->
+  </div>
+
+  <!-- Start right column -->
+  <div class="second-column">
+    <img src="https://www.rmg.co.uk/sites/default/files/styles/rmg_landscape_medium/public/Harrison%20H1%20blog.jpg?itok=_BWd6c3w" alt="One of John Harrison's clocks from the 1700s" class="img-fill">
+    <div class="caption">
+      One of John Harrison's clocks from the <a href="https://www.rmg.co.uk/see-do/we-recommend/attractions/john-harrisons-marine-timekeepers">Royal Observatory</a>.
+    </div>
+  <!-- End right column -->
+  </div>
+
+<!-- End row column -->
+</div>
+
+</section>
+  <script>
+    // JavaScript for controlling behavior and interactivity goes here
+    document.querySelector('h1').innerHTML = 'Finding Longitude in Greenwich';
+    var map = document.getElementById('map');
+    map.style.background = '#4d4a9f';
+    map.addEventListener('click', function() {
+  this.style.width = '50%';   
+});
+// map.addEventListener('click', function() {
+//   this.style.width = '50%';   
+// });
+console.log("hello map");
+var options = {
+    center: [51.4746, 0],
+    zoom: 12
+}
+
+var map = L.map('map', options);
+
+var basemap_url = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+
+var basemap_attributes = {
+	maxZoom: 19,
+	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+}
+
+var tiles = L.tileLayer(basemap_url, basemap_attributes).addTo(map);
+
+var message = 'See the historic clocks here';
+
+L.marker(map.getCenter())
+    .bindTooltip(message)
+    .addTo(map)
+    .openTooltip();
+  </script>
+
+</body>
+<footer>
+  <hr>
+  <a href="https://newmapsplus.github.io">
+        <img src="https://newmapsplus.github.io/assets/graphics/logo-2018-nmp-75px-h-gray.png" alt="University of Kentucky New Maps Plus">
+        </a>
+
+    <a href="https://uky-gis.github.io">
+        <img src="https://newmapsplus.github.io/assets/graphics/logo-2018-geography-75px-h.png" alt="University of Kentucky Department of Geography">
+    </a>
+</footer>
+</html>

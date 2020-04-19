@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset=utf-8 />
+	<title>Power Source Combinations at US Power Plants</title>
+	<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+	<link rel='icon' href='https://newmapsplus.github.io/favicon.ico' type='image/x-icon' />
+
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.css" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.4/leaflet.css">
+	<link href="https://fonts.googleapis.com/css?family=Lato:300,300i,400,900i" rel="stylesheet">
+
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			background: #e3e3e6;
+			font-family: 'Spartan', sans-serif;
+			font-weight: 300;
+			color: #3d3d3d;
+			font-size: 100%;
+			/* 16px is default browser size */
+
+		}
+
+		header,
+		section,
+		footer {
+			width: 80%;
+			margin: 10px auto;
+		}
+
+		h1 {
+			font-weight: 900;
+			font-size: 2.8em;
+			font-style: italic;
+			/* The em unit. 3x the current size */
+			letter-spacing: .02em;
+			margin: 5px 0;
+			/* text-transform: uppercase; */
+		}
+
+		h2 {
+			font-weight: 300;
+			color: #63666a;
+			font-size: 2.2em;
+			letter-spacing: .06em;
+			font-style: italic;
+			margin: 5px 0;
+		}
+
+		h3 {
+			font-weight: 300i;
+			font-size: 1.5em;
+			margin-bottom: 5px;
+		}
+
+		p {
+			font-size: 1.3em;
+			line-height: 1.8em;
+			margin-bottom: 5px;
+		}
+
+		a {
+			color: #004A8B;
+			font-weight: 400;
+			text-decoration: none;
+		}
+
+		a:hover {
+			text-decoration: underline;
+		}
+
+		ul {
+			padding: 0px 20px 4px 20px;
+			font-size: 1.1em;
+			line-height: 1.2em;
+			color: #63666a;
+		}
+
+		li {
+			margin: 10px 0
+		}
+
+		hr {
+			margin: 20px 0;
+			border: 0;
+			height: 1px;
+			background: #63666a;
+
+		}
+
+		.linkbox {
+			margin: 3px 0 20px 0;
+			display: block;
+			font-size: 0.9em;
+			font-weight: 300;
+			line-height: 1.3em;
+		}
+
+		#map {
+			width: 100%;
+			height: 450px;
+			margin: 20px auto;
+
+		}
+
+		.max-image-width {
+			width: 100%;
+		}
+
+		/* Use float property to make two-column layout */
+		.first-column {
+			float: left;
+			width: 49%;
+			padding-right: 2%;
+		}
+
+		.column {
+			float: left;
+			width: 49%;
+		}
+
+		/* Clear floats after the columns */
+		.row::after {
+			content: "";
+			display: block;
+			clear: both;
+		}
+
+		/* When browser is 900px wide or less */
+		@media screen and (max-width: 900px) {
+
+			.first-column,
+			.second-column {
+				width: 100%;
+			}
+		}
+	</style>
+</head>
+
+<body>
+
+	<header>
+		<h1>Power Source Combinations at U.S. Power Plants</h1>
+	</header>
+	<section>
+		<div class="row">
+			<div id="map"></div>
+
+			<div class="first-column">
+				<h2>Combined power sources</h2>
+				<p>Power plants can use multiple power sources for generating electricity. These plants occur throughout the United States. One potential benefit of a multiple source power generation facility is being able to produce power under varied economic and natural climates. For example, if there is a drought, a hydroelectric plant may produce lower amounts of power. But if this hydroelectric plant could also produce electricity from another source, then the plant could switch over to this other source to still provide power.</p>
+				<p>This map shows four combinations of power sources at plants throughout the United States, and the plotting size is proportional to total output. Mouseover the plants to learn more about the total output and output by source.
+				</p>
+				<ul>
+					<li>Hydro and coal = <font color='#d7191c'>Hydro and coal</font></li>
+					<li>Coal and natural gas = <font color='#fdae61'>Coal and natural gas</font></li>
+					<li>Hydro and solar = <font color='#bababa'>Hydro and solar</font></li>
+					<li>Coal and petroleum = <font color='#2c7bb6'>Coal and petroleum</font></li>
+				</ul>
+				<p><b>Social links</b></p>
+				<ul>
+					<li>Visit my public Github <a href='https://github.com/jfobrycki'>mapping portfolio</a>.</li>
+					<li>Visit my <a href="https://www.linkedin.com/in/john-f-obrycki-1a3b032b">LinkedIn page</a>.</li>
+				</ul>
+
+
+			</div>
+			<div class="column">
+				<img class="max-image-width" src="graphics/chart-title.png" title="United States Energy production">
+				<div class="linkbox">
+					US electricity generation by source (<a href="https://www.eia.gov/energyexplained/electricity/electricity-in-the-us.php">US Energy Information Administration</a>)
+				</div>
+			</div>
+		</div>
+	</section>
+	<footer>
+		<hr>
+
+		<a href="https://newmapsplus.github.io">
+			<img src="https://newmapsplus.github.io/assets/graphics/logo-2018-nmp-75px-h-gray.png" alt="University of Kentucky Geography">
+		</a>
+
+		<a href="https://uky-gis.github.io">
+			<img src="https://newmapsplus.github.io/assets/graphics/logo-2018-geography-75px-h.png" alt="University of Kentucky Geography">
+		</a>
+
+	</footer>
+
+<script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+<script src="data/power-plants.js"></script>
+<script>
+		// map options
+		var options = {
+			center: [38, -95],
+			zoom: 4
+		}
+
+		// create a Leaflet map in our division container with id of 'map'
+		var map = L.map('map', options);
+
+		// Leaflet providers base map URL
+		var basemap_source =
+			'https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/dark_all/{z}/{x}/{y}.png'
+
+		// Leaflet providers attributes
+		var basemap_options = {
+			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+			subdomains: 'abcd',
+			maxZoom: 19
+		};
+
+		// request some basemap tiles and add to the map
+		var tiles = L.tileLayer(basemap_source, basemap_options).addTo(map);
+
+		plants.features.sort(function(a, b) {
+  		return b.properties.capacity_mw - a.properties.capacity_mw;
+		});
+
+function getRadius(area) {
+  var radius = Math.sqrt(area/Math.PI);
+  return radius * .6;
+}
+
+var commonStyles = {
+ weight: 1,
+ stroke: 1,
+ fillOpacity: .8
+}
+
+// Colors from colorbrewer
+// Four combinations of power shown
+// Hydro and coal 
+// Coal and natural gas
+// Hydro and solar (I don't think there are any that have this combination)
+// Coal and petroleum
+
+var hydrocoalLayer = L.geoJson(plants, {
+ 	pointToLayer: function(feature,latlng) {
+   	return L.circleMarker(latlng, commonStyles);
+ 	},
+ 	filter: function(feature) {
+   	if(feature.properties.fuel_source.Hydro && 
+   	feature.properties.fuel_source.Coal) {
+    return feature;
+   }
+},
+ 	style: function(feature) {
+   	return {
+    color: '#d7191c',
+    fillColor: '#d7191c',
+	// Nice solution for dual fuel sources!
+    radius: getRadius(feature.properties.fuel_source.Hydro+feature.properties.fuel_source.Coal)
+   }
+},
+ 	onEachFeature : function(feature,layer) {
+  	layer.on('mouseover', function() {
+	layer.bindTooltip(`<b>${layer.feature.properties.plant_name}<br>
+		Total capacity: ${feature.properties.fuel_source.Hydro+feature.properties.fuel_source.Coal}<br>
+		Hydro capacity: ${feature.properties.fuel_source.Hydro}<br>
+		Coal capacity: ${feature.properties.fuel_source.Coal}
+		</b>`);
+	layer.setStyle({fillColor:'red'});
+});
+  	layer.on('mouseout', function() {
+	layer.setStyle({fillColor:'#d7191c'});
+});
+}
+}).addTo(map);
+
+var coalgasLayer = L.geoJson(plants, {
+ 	pointToLayer: function(feature,latlng) {
+   	return L.circleMarker(latlng, commonStyles);
+ 	},
+ 	filter: function(feature) {
+   	if(feature.properties.fuel_source.Coal && 
+   	feature.properties.fuel_source["Natural Gas"]) {
+    return feature;
+}
+},
+ 	style: function(feature) {
+   	return {
+    color: '#fdae61',
+    fillColor: '#fdae61',
+    radius: getRadius(feature.properties.fuel_source.Coal+feature.properties.fuel_source["Natural Gas"])
+}
+},
+ onEachFeature : function(feature,layer) {
+  layer.on('mouseover', function() {
+	layer.bindTooltip(`<b>${layer.feature.properties.plant_name}<br>
+		Total capacity: ${feature.properties.fuel_source.Coal+feature.properties.fuel_source["Natural Gas"]}<br>
+		Coal capacity: ${feature.properties.fuel_source.Coal}<br>
+		Natural gas capacity: ${feature.properties.fuel_source["Natural Gas"]}
+		</b>`);
+	layer.setStyle({fillColor:'red'});
+});
+  layer.on('mouseout', function() {
+	layer.setStyle({fillColor:'#fdae61'});
+    // code goes in here
+});
+}
+}).addTo(map);
+
+var hydrosolarLayer = L.geoJson(plants, {
+ 	pointToLayer: function(feature,latlng) {
+   	return L.circleMarker(latlng, commonStyles);
+},
+ 	filter: function(feature) {
+   	if(feature.properties.fuel_source.Hydro && 
+   	feature.properties.fuel_source.Solar) {
+    return feature;
+}
+},
+ 	style: function(feature) {
+   	return {
+    color: '#bababa',
+    fillColor: '#bababa',
+    radius: getRadius(feature.properties.fuel_source.Hydro+feature.properties.fuel_source.Solar)
+}
+},
+ 	onEachFeature : function(feature,layer) {
+  	layer.on('mouseover', function() {
+	layer.bindTooltip(`<b>${layer.feature.properties.plant_name}<br>
+		Total capacity: ${feature.properties.fuel_source.Hydro+feature.properties.fuel_source.Solar}<br>
+		Hydro capacity: ${feature.properties.fuel_source.Hydro}<br>
+		Solar capacity: ${feature.properties.fuel_source.Solar}
+		</b>`);
+	layer.setStyle({fillColor:'red'});
+});
+  	layer.on('mouseout', function() {
+	layer.setStyle({fillColor:'#bababa'});
+});
+}
+}).addTo(map);
+
+
+// Pick two fuel sources. Does the plant have a third?
+
+var coalpetroLayer = L.geoJson(plants, {
+ 	pointToLayer: function(feature,latlng) {
+   	return L.circleMarker(latlng, commonStyles);
+},
+ 	filter: function(feature) {
+   	if(feature.properties.fuel_source.Coal && 
+   	feature.properties.fuel_source["Petroleum"]) {
+    return feature;
+}
+},
+ 	style: function(feature) {
+   	return {
+    color: '#2c7bb6',
+    fillColor: '#2c7bb6',
+	radius: getRadius(feature.properties.capacity_mw)
+}
+},
+ 	onEachFeature : function(feature,layer) {
+	var tooltip = `<h3>${feature.properties.plant_name}</h3>`
+	for (var fuel in feature.properties.fuel_source) {
+		tooltip += `<br><b>${fuel}:</b> ${feature.properties.fuel_source[fuel]} MW`
+	}
+	layer.bindTooltip(tooltip);
+  	layer.on('mouseover', function() {
+	
+	layer.setStyle({fillColor:'red'});
+});
+  	layer.on('mouseout', function() {
+	layer.setStyle({fillColor:'#2c7bb6'});
+});
+}
+}).addTo(map);
+
+
+//trying to list the counts of plants that fit each category
+// const coalcount = filter(plants => fuel_source === 'Coal').length;
+
+
+// Goal is to create object with key for fuel source and its value the number of plants.
+// create empty object
+var count = {};
+// Loop through array of features with for...of loop. This is a relatively looping structure we briefly discussed in a previous module.
+for (var plants of plants.features) {
+	console.log(plants.properties.fuel_source);
+	//  Loop through all fuel sources for each plant
+	for (var fuel in plants.properties.fuel_source) {
+		// If the key doesn't already exist in the count object, 
+		if (!count[fuel]) {
+			// add it
+			count[fuel] = 1
+		} else {
+			// else it already exists so add one more.
+			count[fuel] += 1
+		}
+	}
+}
+// Print the object
+console.log(count);
+
+//the method in this activity is to create three .addTo(map) commands, in previous modules, we've made the variables and then looped through them
+//I assume it's feasible to do this as a loop too, but if we're pulling from a dataset, maybe it's easier to approach the map in this discrete manner of plotting wind, then water, then solar?
+
+// In module 08 we address the above the scenario in the refactoring section.
+</script>
+</body>
+</html>
