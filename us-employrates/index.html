@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset=utf-8 />
+  <title>Unemployment Rates Across The US</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+    integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+    crossorigin="" />
+  <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: whitesmoke;
+      font-family: Lato, sans-serif;
+      color: #0D0000;
+    }
+
+    h1 {
+      position: absolute;
+      z-index: 650;
+      top: 10px;
+      left: 15px;
+      padding: 8px 15px;
+      margin: 0;
+      color: whitesmoke;
+      font-size: 1.5em;
+      background: rgba(25, 25, 25, 0.8);
+      border-radius: 5px;
+    }
+
+    h2 {
+      display: inline-block;
+      color: #001323;
+    }
+
+    #map {
+      position: absolute;
+      width: 100%;
+      top: 0;
+      bottom: 0;
+    }
+
+    footer {
+      padding: 6px 10%;
+      width: 80%;
+    }
+
+    p {
+      font-size: 1em;
+      color: #001323;
+    }
+
+    .legend {
+      padding: 6px 8px;
+      font-size: 1em;
+      background: rgba(75, 75, 75, 0.8);
+      color: whitesmoke;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      border-radius: 5px;
+      width: 160px;
+    }
+
+    .legend h3 {
+      font-size: 1.1em;
+      font-weight: bold;
+      line-height: 1em;
+      color: whitesmoke;
+      margin: 0;
+    }
+
+    .legend h3 span {
+      font-size: 1.3em;
+      margin: 0 20px 0 0;
+    }
+
+    .legend ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 12px 4px 0;
+    }
+
+    .legend li {
+      height: 22px;
+    }
+
+    .legend span {
+      width: 30px;
+      height: 20px;
+      float: left;
+      margin-right: 10px;
+    }
+
+    #ui-controls {
+      width: 176px;
+      padding: 8px 25px 8px 15px;
+      background: rgba(75, 75, 75, 0.8);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      border-radius: 5px;
+      color: whitesmoke;
+    }
+
+    #ui-controls .min {
+      float: left;
+    }
+
+    #ui-controls .max {
+      float: right;
+      margin-right: -15px;
+    }
+
+    .year-slider {
+      width: 100%;
+    }
+
+    label {
+      font-size: 1.1em;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>United States Unemployment Rates: 2001 &ndash; 2015</h1>
+  <div id="map"></div>
+  <div id="ui-controls">
+    <label>
+      <span class="min">2001</span>
+      <span class="max">2015</span>
+      <input type="range" min="2001" , max="2015" , value="2001" , step="1" , class="year-slider">
+    </label>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+    integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+    crossorigin=""></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.1.0/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.1.0/chroma.min.js"></script>
+
+  <!-- legend is outside of container-fluid and will be dynamically added to map -->
+  <!--Create a dropdown menu where people could set their location and the map would change the map center to show the contiguous US, Alaska, or Hawaii -->
+  <div class="bg-secondary py-2 px-3 ml-3 mt-3 text-white" id="legend"></div>
+  <div id="dropdown-ui" class="form-group mr-3 mt-3">
+    <!-- ui is outside of container-fluid and will be dynamically added to map -->
+    <div class="form-group mr-3 mt-3" id="dropdown-ui">
+      <select class="form-control bg-primary text-white">
+        <option value="Contig" selected>Contiguous United States</option>
+        <option value="Alaska">Alaska</option>
+        <option value="Hawaii">Hawaii</option>
+      </select>
+    </div>
+    <!-- end ui-controls -->
+    <!-- the above ui section is about creating the dropdown menu where users can select the layer that should be shown-->
+
+    <script>
+      // map options
+      const options = {
+        scrollWheelZoom: false,
+        zoomSnap: .1,
+        dragging: false,
+        zoomControl: false,
+        center: [39.8097, -98.5556],
+        //but if the center was a variable, then this would need to be moved
+        //when i remove this, the zoom goes away entirely and shows the whole globe
+        zoom: 4.75
+      }
+      //zoom set to Lebanon Kansas
+      // create the Leaflet map
+      const map = L.map('map', options);
+
+      // request tiles and add to map
+      const tiles = L.tileLayer('http://{s}.tile.stamen.com/toner-background/{z}/{x}/{y}.{ext}', {
+        attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        subdomains: 'abcd',
+        ext: 'png'
+      }).addTo(map);
+
+      // AJAX request for GeoJSON data
+      $.getJSON("data/us-counties.json", function (counties) {
+
+        Papa.parse('data/us-unemployment-counties.csv', {
+
+          download: true,
+          header: true,
+          complete: function (data) {
+            //make a new function
+            processData(counties, data);
+
+            // data is accessible to us here
+            // visible in the console log
+            // console.log('data: ', data);
+
+            // note that counties is also accessible here!
+            // visible in the console log
+            // console.log('counties: ', counties);
+
+          }
+        }); // end of Papa.parse()
+
+        // counties is accessible here
+        //console.log(counties);
+        // processData(counties);
+
+      }) // end of $.getJSON
+        .fail(function () {
+          // the data file failed to load
+          console.log("Error loading the data. Check the $.getJSON");
+        });
+
+      function processData(counties, data) {
+
+        // drawMap(counties);
+        // code goes here
+        //moving onto the counties
+        //this is a two loop structure
+        //the outer loop goes through all the counties (specifically the features)
+        //the inner loop is the csv data rows
+        //for each county features, go through all rows of the csv file
+        // console.log(data)
+
+
+        // loop through all the counties
+        for (let i of counties.features) {
+
+          // for each of the CSV data rows
+          for (let j of data.data) {
+
+            // Create concat when accessing the keys in the CSV
+            j.statecounty = j.STATE_FIP.concat(j.COUNTY_FIP)
+            // or
+            // j.statecounty = j.STATE_FIP + j.COUNTY_FIP
+            // console.log(j.statecounty)
+
+            // if the county fips code and data fips code match
+            if (i.properties.GEOID === j.statecounty) {
+
+              // re-assign the data for that county as the county's props
+              i.properties.unemploymentData = j;
+
+              // re-assign the data for that county as the county's props
+              // i.properties.unemploymentData = j;
+
+              // no need to keep looping, break from inner loop
+              break;
+
+              // console.log the values
+              console.log('county fip: ', i.properties.GEOID);
+              console.log('data fip: ', j.statecounty);
+            } //steps within the inner loop
+          } //end of inner loop
+        } //end of outer loop
+        console.log('after: ', counties);
+
+        // empty array to store all the data values
+        const rates = [];
+
+        // iterate through all the counties
+        counties.features.forEach(function (county) {
+
+          // iterate through all the props of each county
+          for (const prop in county.properties.unemploymentData) {
+            // Because data was added into a new key, console.log to verify
+            //console.log(county.properties.unemploymentData[prop])
+            //Running console.log iterates through all the counties, browser is slowly listing output in chunks
+            //turning console.log back off to help console load and diagnose other issues with the code
+            // if the attribute is a number and not one of the fips codes or name
+            // look in the prop (which is the variable field of unemploymentData within county and properties)
+            // if the prop is not called COUNTY_FIP, STATE_FIP, NAME, or statecounty, then pull the value because it should be a year with an associated unemployment data
+            if (prop != "COUNTY_FIP" && prop != "STATE_FIP" && prop != "NAME" && prop != 'statecounty') {
+
+              // push that attribute value into the array
+              // from the lesson code
+              // rates.push(Number(county.properties[prop]));
+              // Add correct address for data and uncomment
+              rates.push(Number(county.properties.unemploymentData[prop]));
+            }
+          }
+        });
+
+        // verify the result!
+        console.log(rates);
+        //long list of rate data, without information about county because we are going to colorize across all values to keep the legend consistent across years
+
+        // rates is declared within the processData function, so the next part using var breaks has to occur within this same function
+        // create class breaks
+        var breaks = chroma.limits(rates, 'q', 5);
+
+        // create color generator function
+        var colorize = chroma.scale(chroma.brewer.OrRd).classes(breaks).mode('lab');
+
+        console.log(colorize) // function (a){var b;return b=s(u(a)),m&&b[m]?b[m]():b}
+        //N(r), there are lots of rows in colorize in the console.log
+        //var color = colorize(20);
+        //console.log(color); // a {_rgb: Array[4]}
+
+        drawMap(counties, colorize)
+        drawLegend(breaks, colorize)
+      } //end of processData function
+
+      function drawMap(counties, colorize) {
+
+        // create Leaflet object with geometry data and add to map
+        const dataLayer = L.geoJson(counties, {
+          style: function (feature) {
+            return {
+              color: 'black',
+              weight: 1,
+              fillOpacity: 1,
+              fillColor: '#1f78b4'
+            };
+          }
+        }).addTo(map);
+
+        // first set the zoom/center to the dataLayer's extent
+        map.fitBounds(dataLayer.getBounds());
+
+        // then back the zoom level off a bit (since we're viewing the map full screen)
+        map.setZoom(map.getZoom() - .2);
+
+        //create the slider, because this is in the drawMap
+        createSliderUI(dataLayer, colorize);
+
+        //and then we need to update the map
+        updateMap(dataLayer, colorize, "2001");
+        addUi(counties); // add the UI controls
+
+        //make sure to add in the updateMap step
+        //also the user interface to route bck into the drawMap function
+        //update map function will bring in colorize
+        //slider is waiting, then call updateMap independently of update Map
+      } //this is the end of the drawMap function
+
+      function updateMap(dataLayer, colorize, currentYear) {
+
+        //now we need to loop through each layer
+        dataLayer.eachLayer(function (layer) {
+
+          // Add correct address for data and uncomment
+          const props = layer.feature.properties.unemploymentData;
+
+          if (props) {
+            layer.setStyle({
+              fillColor: colorize(Number(props[currentYear]))
+            });
+
+            const tooltip = `<b>${props["NAME"]} </b><br>
+          ${props[currentYear]}% Unemployment`;
+
+            layer.bindTooltip(tooltip, {
+              sticky: true
+            });
+          } else {
+            layer.setStyle({
+              fillColor: 'lightgray'
+            });
+
+            const tooltip = `No data available`;
+
+            layer.bindTooltip(tooltip, {
+              sticky: true
+            });
+
+          }
+
+        });
+
+        //updateMap(dataLayer, colorize, '2006');
+        //update map needs counties, colorize, and the year from the slider
+        //fillColor: colorize(Number(props[currentYear]))
+        //similar to lab 2 for passing the color, bring in the dataset, then apply the colors
+        // 3 arguments, 1 is counties getting in the data layer, 2 is the year, and 3 is the colorize
+        // colorize function has the year
+        // county has the polygons to loop through, find the color, pass into colorize, year which column to see
+      } // end updateMap(), 
+
+      function drawLegend(breaks, colorize) {
+        const legendControl = L.control({
+          position: 'topright'
+        });
+
+        legendControl.onAdd = function (map) {
+          const legend = L.DomUtil.create('div', 'legend');
+          return legend;
+        };
+
+        legendControl.addTo(map);
+
+        const legend = $('.legend').html("<h3><span>2001</span> Unemployment Rates</h3><ul>");
+
+        for (let i = 0; i < breaks.length - 1; i++) {
+          const color = colorize(breaks[i], breaks);
+
+          const classRange = `<li><span style="background:${color}"></span>
+          ${breaks[i].toLocaleString()}% &mdash;
+          ${breaks[i + 1].toLocaleString()}%</li>`
+
+          $('.legend ul').append(classRange);
+        }
+        legend.append("</ul>");
+      } // end drawLegend()
+      //breaks and colorize must go into the legend
+
+      function createSliderUI(dataLayer, colorize) {
+
+        const sliderControl = L.control({
+          position: 'bottomleft'
+        });
+
+        sliderControl.onAdd = function (map) {
+          const slider = L.DomUtil.get("ui-controls");
+          L.DomEvent.disableScrollPropagation(slider);
+          L.DomEvent.disableClickPropagation(slider);
+          return slider;
+
+        }
+
+        sliderControl.addTo(map);
+
+        $(".year-slider")
+          .on("input change", function () {
+            const currentYear = $(this).val();
+            updateMap(dataLayer, colorize, currentYear);
+            $('.legend h3 span').html(currentYear);
+
+          });
+
+      } // end createSliderUI()
+
+      //Testing out a Zoom approach for the United States
+      //Another method could be to set the Zoom for a getBounds statement, going across all counties and splitting the county name by the comma that separates county name from the two letter state abbreviation
+      //Then could all similar two letter named counties be combined into objects and the getBounds statement could be applied to those groups
+      //Another method could be to add a state level json and then match the two letter abbreviations with this layer to then create a new variable for state, much like the merge that occurred in this document
+      //Then the getBounds could be set to the state
+      //This testing approach inspired by https://groups.google.com/forum/#!topic/leaflet-js/Q9XUc7ArJeI
+
+      // FUNCTION: Adding the user interface (UI) to the map
+      //This function would allow people to select which part of the US to zoom in on and see the unemployment data
+      function addUi(counties) {
+        // create the slider control
+        var selectControl = L.control({ position: "bottomright" });
+
+        // when control is added
+        selectControl.onAdd = function () {
+          // get the element with id attribute of ui-controls
+          return L.DomUtil.get("dropdown-ui");
+        };
+        // add the control to the map
+        selectControl.addTo(map);
+
+        //Thanks Boyd!
+        // Use object literal with key:values
+        // Note: .panTo() method can take lat, lon array
+        const zoomAreas = {
+          "Contig": [39.8097, -98.5556],
+          "Alaska": [64.2008, -149.4937],
+          "Hawaii": [19.8968, -155.5828]
+        }
+
+        $('#dropdown-ui select').change(function () {
+          
+          map.panTo(zoomAreas[this.value]);
+         // map.center([this.value]);
+         // map.center is not a function, but I hoped it would be
+          updateMap(counties)
+          // code executed here when change event occurs
+          // but the current zoom in the map is set outside a function, the zoom would need to be moved within the createMap function and then this function would then be routed to the updateMap function
+        });
+      } // end of addUI function
+
+      //creating the labels
+      const labels = {
+        "Contig": "Continental US",
+        "Alaska": "Alaska",
+        "Hawaii": "Hawaii"
+      }
+
+      //setting the data for the zoom that could be used
+      // Correct format for L.latLng() to build coord
+     // var Contig = L.latLng(39.8097, -98.5556);
+     // var Alaska = L.latLng(64.2008, -149.4937);
+     // var Hawaii = L.latLng(19.8968, -155.5828)
+
+      //var Contig = (39.8097, -98.5556);
+      //var Alaska = (64.2008, -149.4937);
+      //var Hawaii = (19.8968, -155.5828)
+      //I receive "TypeError: t is null", so I switched from L.Latlng() to using square brackets
+
+
+// console.log(counties)
+
+    //similar to UI function in lab 2
+    // year comes from value of the slider
+    //example functions
+    //var letters = ["a", "b", "c", "d", "e"];
+    //var numbers = [1, 2, 3, 4, 5];
+
+    //for (var i = 0; i < letters.length; i++) {
+    //  for (var j = 0; j < numbers.length; j++) {
+    //    console.log(letters[i], numbers[j]); // what are these outputs?
+    //  }
+    //}
+    //the output is a1,a2,a3,a4,a5,b1,b2, and so forth
+    //for each of the items in letters, go through either of the numbers, and write letters followed by numbers
+    //this is how I think about loops
+
+    //const letters = ["a", "b", "c", "d", "e"];
+    //const numbers = [1, 2, 3, 4, 5];
+
+    //for (let i of letters) {
+    //  for (let j of numbers) {
+    //    console.log(i, j); // what are these outputs?
+    //  }
+    // }
+    //output is the same as above, a1,a2,a3,until b1,b2,b3
+    //for each of the items in letters, go through all the numbers and write letter, number
+    //this is a newer way to think about loops for me
+
+    //const letters = ["a", "b", "c", "d", "e"];
+    //const numbers = [1, 2, 3, 4, 5];
+
+    //letters.forEach((i) => {
+    //  numbers.forEach((j) => {
+    //    console.log(i, j); // what are these outputs?
+    //  })
+    //  })
+    //output is the same as above, a1,a2,a3, until b1,b2,b3
+    //for each of the items in letters, go through each of the items in numbers and write this to the console
+    //this arrow notation was new to me when we first discussed it in NewMaps courses
+
+
+    </script>
+
+</body>
+
+</html>
